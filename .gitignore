@@ -1,0 +1,7 @@
+# MATLAB
+*.asv
+*.mex*
+slprj/
+
+# Sistema
+.DS_Store
