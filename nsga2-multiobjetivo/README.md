@@ -1,110 +1,110 @@
-# NSGA-II: optimización multiobjetivo
+# NSGA-II: multi-objective optimization
 
-Implementación de **NSGA-II** (*Non-dominated Sorting Genetic Algorithm II*)
-aplicada a dos problemas de distinta naturaleza, con dos objetivos en conflicto
-en cada uno. En lugar de una única solución óptima se busca el **frente de
-Pareto**: las soluciones en las que no se puede mejorar un objetivo sin
-empeorar el otro.
+Implementation of **NSGA-II** (*Non-dominated Sorting Genetic Algorithm II*)
+applied to two problems of different nature, each with two conflicting
+objectives. Instead of a single optimal solution, the goal is the **Pareto
+front**: the solutions in which one objective cannot be improved without
+worsening the other.
 
-- **ZDT1 (continuo).** 50 variables en [0, 1] y dos objetivos a minimizar. Es un
-  problema de prueba estándar y su frente de Pareto exacto se conoce:
+- **ZDT1 (continuous).** 50 variables in [0, 1] and two objectives to minimize.
+  It is a standard test problem and its exact Pareto front is known:
   f₂ = 1 − √f₁.
-- **Mochila multiobjetivo (discreto y con restricción).** 500 objetos: hay que
-  elegir cuáles meter para maximizar a la vez el beneficio económico y el valor
-  estratégico, sin superar el peso máximo.
+- **Multi-objective knapsack (discrete and constrained).** 500 items: choose
+  which ones to pack to maximize both economic profit and strategic value at the
+  same time, without exceeding the maximum weight.
 
-## Cómo funciona
+## How it works
 
-El núcleo del algoritmo ([`nsga2.m`](nsga2.m)) es común a los dos problemas:
+The core of the algorithm ([`nsga2.m`](nsga2.m)) is shared by both problems:
 
-1. **Ordenación por dominancia.** Una solución domina a otra si no es peor en
-   ningún objetivo y es mejor en al menos uno. El frente 1 lo forman las que
-   nadie domina; el frente 2, las que solo dominan las del frente 1; y así
-   sucesivamente. Está vectorizada: la matriz de dominancia de toda la
-   población se calcula de una vez.
-2. **Distancia de crowding.** Dentro de cada frente mide lo aislada que está
-   cada solución. Se prefieren las de zonas poco pobladas para mantener el
-   frente repartido, y los extremos se conservan siempre.
-3. **Selección por torneo binario** (gana el de menor frente y, si empatan, el
-   de mayor crowding), cruce y mutación.
-4. **Selección elitista.** Padres e hijos se juntan y sobreviven los mejores
-   frentes completos. El último frente que no cabe entero se recorta por
-   crowding.
+1. **Non-dominated sorting.** A solution dominates another if it is no worse in
+   any objective and better in at least one. Front 1 is made of the solutions
+   that nobody dominates; front 2, of those dominated only by front 1; and so on.
+   It is vectorized: the dominance matrix of the whole population is computed at
+   once.
+2. **Crowding distance.** Within each front it measures how isolated each
+   solution is. Solutions in sparse regions are preferred to keep the front well
+   spread, and the extremes are always kept.
+3. **Binary tournament selection** (the one in the lower front wins and, in case
+   of a tie, the one with the larger crowding distance), crossover and mutation.
+4. **Elitist selection.** Parents and children are merged and the best whole
+   fronts survive. The last front that does not fit completely is truncated by
+   crowding distance.
 
-Operadores de cada problema ([`ejecutar_nsga2.m`](ejecutar_nsga2.m)):
+Operators for each problem ([`ejecutar_nsga2.m`](ejecutar_nsga2.m)):
 
-| | ZDT1 (continuo) | Mochila (binario) |
+| | ZDT1 (continuous) | Knapsack (binary) |
 |---|---|---|
-| Cruce | SBX (*Simulated Binary Crossover*) | Uniforme |
-| Mutación | Polinómica | Inversión de bits |
-| Restricción | — | **Reparación**: si una solución supera el peso, se quitan objetos al azar hasta que cabe |
+| Crossover | SBX (*Simulated Binary Crossover*) | Uniform |
+| Mutation | Polynomial | Bit flip |
+| Constraint | — | **Repair**: if a solution exceeds the weight, random items are removed until it fits |
 
-Se eligió reparar en lugar de penalizar para que todas las soluciones de la
-población sean válidas y el frente final no contenga mochilas imposibles.
+Repair was chosen over penalization so that every solution in the population is
+valid and the final front contains no impossible knapsacks.
 
-## Experimentos
+## Experiments
 
-Tres configuraciones por problema, pensadas para provocar comportamientos
-distintos, con **30 ejecuciones independientes** cada una:
+Three configurations per problem, designed to trigger different behaviours,
+with **30 independent runs** each:
 
-| Configuración | Población | Generaciones | P. cruce | P. mutación | Idea |
+| Configuration | Population | Generations | Crossover p. | Mutation p. | Idea |
 |---|---|---|---|---|---|
-| Equilibrada | 120 | 500 | 0,9 | 0,1 (ZDT1) / 1/500 (mochila) | Tiempo suficiente para converger |
-| Exploratoria | 200 | 100 | 0,7 | 0,1 / 0,05 | Mucha diversidad y mutación, poco tiempo |
-| Prematura | 30 | 30–40 | 0,95 | 0,001 | Población pequeña y casi sin mutación |
+| Balanced | 120 | 500 | 0.9 | 0.1 (ZDT1) / 1/500 (knapsack) | Enough time to converge |
+| Exploratory | 200 | 100 | 0.7 | 0.1 / 0.05 | High diversity and mutation, little time |
+| Premature | 30 | 30–40 | 0.95 | 0.001 | Small population and almost no mutation |
 
-En ZDT1 se ajustan también los índices de distribución de SBX y de la mutación
-polinómica (η = 15/20, 5/5 y 50/50): con η alto los hijos salen muy pegados a
-los padres.
+For ZDT1 the distribution indices of SBX and polynomial mutation are also tuned
+(η = 15/20, 5/5 and 50/50): with a high η the children stay very close to their
+parents.
 
-Métricas:
-- **Hipervolumen (HV).** Área del espacio de objetivos dominada por el frente,
-  hasta un punto de referencia. Recoge a la vez la convergencia y la diversidad.
-  Mayor es mejor.
-- **IGD+.** Para cada punto del frente de referencia, la distancia a la solución
-  obtenida más cercana, contando solo en lo que esta es peor. Penaliza los huecos
-  y las zonas sin cubrir. Menor es mejor. En ZDT1 la referencia es el frente
-  exacto. En la mochila, que no lo tiene conocido, se usan las soluciones no
-  dominadas de todas las ejecuciones juntas.
+Metrics:
+- **Hypervolume (HV).** Area of the objective space dominated by the front, up
+  to a reference point. It captures convergence and diversity at the same time.
+  Higher is better.
+- **IGD+.** For each point of the reference front, the distance to the closest
+  obtained solution, counting only where the latter is worse. It penalizes gaps
+  and uncovered regions. Lower is better. For ZDT1 the reference is the exact
+  front. For the knapsack, whose front is unknown, the non-dominated solutions
+  of all runs combined are used.
 
-## Resultados
+## Results
 
-| Problema | Configuración | HV (media ± desv.) | IGD+ (media ± desv.) |
+| Problem | Configuration | HV (mean ± std.) | IGD+ (mean ± std.) |
 |---|---|---|---|
-| ZDT1 | **Equilibrada** | **3,648 ± 0,002** | **0,0086 ± 0,0007** |
-| ZDT1 | Exploratoria | 3,264 ± 0,052 | 0,156 ± 0,019 |
-| ZDT1 | Prematura | 0 ± 0 | 2,45 ± 0,18 |
-| Mochila | **Equilibrada** | **2,021·10¹⁰ ± 1,6·10⁸** | **848 ± 230** |
-| Mochila | Exploratoria | 1,344·10¹⁰ ± 1,7·10⁸ | 35.660 ± 1.086 |
-| Mochila | Prematura | 1,118·10¹⁰ ± 3,6·10⁸ | 45.269 ± 2.724 |
+| ZDT1 | **Balanced** | **3.648 ± 0.002** | **0.0086 ± 0.0007** |
+| ZDT1 | Exploratory | 3.264 ± 0.052 | 0.156 ± 0.019 |
+| ZDT1 | Premature | 0 ± 0 | 2.45 ± 0.18 |
+| Knapsack | **Balanced** | **2.021·10¹⁰ ± 1.6·10⁸** | **848 ± 230** |
+| Knapsack | Exploratory | 1.344·10¹⁰ ± 1.7·10⁸ | 35,660 ± 1,086 |
+| Knapsack | Premature | 1.118·10¹⁰ ± 3.6·10⁸ | 45,269 ± 2,724 |
 
-![Hipervolumen e IGD+ en 30 ejecuciones](figuras/metricas.png)
+![Hypervolume and IGD+ over 30 runs](figuras/metricas.png)
 
-![Frentes obtenidos (ejecución mediana de cada configuración)](figuras/frentes.png)
+![Obtained fronts (median run of each configuration)](figuras/frentes.png)
 
-- **La configuración equilibrada es la mejor en los dos problemas** y con mucha
-  diferencia. En ZDT1 su frente se superpone al exacto (IGD+ < 0,01). En la
-  mochila recorre casi todo el frente de referencia.
-- **La exploratoria** mantiene un frente bien repartido, pero con solo 100
-  generaciones no llega a converger: queda por encima del frente real en ZDT1 y
-  muy por detrás en la mochila.
-- **La prematura** se estanca lejos del frente. En ZDT1 todos sus puntos quedan
-  fuera del punto de referencia del hipervolumen (2, 2), así que su **HV es 0
-  en las 30 ejecuciones**. Ahí el HV ya no distingue entre una ejecución mala y
-  otra peor, y es IGD+ quien sigue midiendo cuánto se aleja. Para eso sirve
-  tener dos métricas.
-- **Continuo frente a discreto.** En ZDT1 basta con mover las variables poco a
-  poco hacia el frente. En la mochila, con 500 objetos y la restricción de
-  peso, el espacio es enorme y casi cualquier cambio rompe la restricción, que
-  hay que reparar. Por eso la diferencia entre configuraciones es mucho mayor:
-  sin generaciones suficientes ni una mutación baja y constante, el frente se
-  queda muy lejos.
-- La comparación visual de los frentes confirma las métricas, pero las métricas
-  permiten comparar las 30 ejecuciones a la vez y ver además la estabilidad: la
-  configuración equilibrada es también la de menor dispersión.
+- **The balanced configuration is the best on both problems**, by a wide
+  margin. On ZDT1 its front overlaps the exact one (IGD+ < 0.01). On the
+  knapsack it covers almost the whole reference front.
+- **The exploratory one** keeps a well-spread front, but with only 100
+  generations it does not converge: it stays above the true front on ZDT1 and
+  far behind on the knapsack.
+- **The premature one** stalls far from the front. On ZDT1 all its points fall
+  outside the hypervolume reference point (2, 2), so its **HV is 0 in all 30
+  runs**. There HV can no longer tell a bad run from a worse one, and it is IGD+
+  that keeps measuring how far off it is. That is what having two metrics is
+  for.
+- **Continuous vs. discrete.** On ZDT1 it is enough to move the variables little
+  by little towards the front. On the knapsack, with 500 items and the weight
+  constraint, the space is huge and almost any change breaks the constraint,
+  which then has to be repaired. That is why the difference between
+  configurations is much larger: without enough generations and a low, steady
+  mutation rate, the front stays far away.
+- Visually comparing the fronts confirms the metrics, but the metrics allow
+  comparing all 30 runs at once and also show stability: the balanced
+  configuration is also the one with the smallest spread.
 
-## Cómo ejecutarlo
+## How to run
 
-Ejecutar `ejecutar_nsga2.m` en MATLAB (tarda unos 2 minutos). Los datos de la
-mochila están en `datos/instancia_mokp.mat`: beneficios, valores estratégicos,
-pesos y capacidad máxima.
+Run `ejecutar_nsga2.m` in MATLAB (it takes about 2 minutes). The knapsack data
+is in `datos/instancia_mokp.mat`: profits, strategic values, weights and maximum
+capacity.

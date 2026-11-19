@@ -1,68 +1,69 @@
-# Recocido simulado y búsqueda tabú para el problema del viajante
+# Simulated annealing and tabu search for the travelling salesman problem
 
-Dos metaheurísticas de trayectoria aplicadas al problema del viajante (TSP):
-encontrar la ruta cerrada más corta que pasa una vez por cada ciudad. Las
-instancias tienen las ciudades **agrupadas en clusters** pequeños y muy
-separados, lo que llena el problema de óptimos locales: un mal orden de visita
-de los clusters cuesta mucho y es difícil de corregir con cambios pequeños.
+Two trajectory-based metaheuristics applied to the travelling salesman problem
+(TSP): finding the shortest closed route that visits each city once. In these
+instances the cities are **grouped in small clusters** far apart from each
+other, which fills the problem with local optima: a bad order of visiting the
+clusters is very costly and hard to fix with small changes.
 
-## Cómo funciona
+## How it works
 
-Las dos usan el vecindario **2-opt**: se eligen dos posiciones de la ruta y se
-invierte el tramo entre ellas. Solo cambian dos aristas, así que la variación de
-la distancia se calcula en O(1) sin recorrer la ruta entera.
+Both use the **2-opt** neighbourhood: two positions of the route are chosen and
+the segment between them is reversed. Only two edges change, so the change in
+length is computed in O(1) without traversing the whole route.
 
-**Recocido simulado** ([`solve_tsp_sa.m`](solve_tsp_sa.m))
-- En cada iteración prueba un movimiento 2-opt al azar. Si mejora se acepta; si
-  empeora en Δ, se acepta con probabilidad e^(−Δ/T).
-- La temperatura baja de forma geométrica desde T₀ = 1000 hasta 10⁻³ a lo largo
-  del tiempo disponible. Al principio acepta casi todo (explora y puede cambiar
-  el orden de los clusters) y al final solo mejoras (afina dentro de cada
-  cluster). El enfriamiento va ligado al tiempo y no al número de iteraciones,
-  para que llegue a enfriarse aunque el presupuesto sea de solo 5 s.
+**Simulated annealing** ([`solve_tsp_sa.m`](solve_tsp_sa.m))
+- At each iteration it tries a random 2-opt move. If it improves, it is
+  accepted; if it worsens by Δ, it is accepted with probability e^(−Δ/T).
+- The temperature decreases geometrically from T₀ = 1000 to 10⁻³ over the
+  available time. At first it accepts almost everything (it explores and can
+  change the order of the clusters) and at the end only improvements (it
+  fine-tunes the route inside each cluster). Cooling is tied to time rather than
+  to the number of iterations, so that it cools down fully even with a budget of
+  only 5 s.
 
-**Búsqueda tabú** ([`solve_tsp_tabu.m`](solve_tsp_tabu.m))
-- En cada iteración evalúa los n(n−1)/2 movimientos 2-opt (vectorizado) y aplica
-  el mejor que no esté prohibido, **aunque empeore**: así sale de los óptimos
-  locales.
-- Tras invertir el tramo entre las ciudades *b* y *c*, el par {*b*, *c*} queda
-  tabú durante 40 iteraciones para no deshacer el movimiento.
-- Criterio de aspiración: un movimiento tabú se permite si mejora la mejor ruta
-  encontrada hasta el momento.
+**Tabu search** ([`solve_tsp_tabu.m`](solve_tsp_tabu.m))
+- At each iteration it evaluates all n(n−1)/2 2-opt moves (vectorized) and
+  applies the best one that is not forbidden, **even if it is worse**: this is
+  how it escapes local optima.
+- After reversing the segment between cities *b* and *c*, the pair {*b*, *c*}
+  stays tabu for 40 iterations so the move is not undone.
+- Aspiration criterion: a tabu move is allowed if it improves the best route
+  found so far.
 
-## Resultados
+## Results
 
-Longitud de la mejor ruta, con un límite de tiempo que crece con el tamaño de
-la instancia:
+Length of the best route, with a time limit that grows with the instance size:
 
-| Instancia | Ciudades | Tiempo | Recocido simulado | Búsqueda tabú |
+| Instance | Cities | Time | Simulated annealing | Tabu search |
 |---|---|---|---|---|
-| tsp_0050 | 50 | 5 s | **241,95** | **241,95** |
-| tsp_0100 | 100 | 10 s | **477,05** | 482,00 |
-| tsp_0200 | 200 | 20 s | **885,78** | 889,93 |
-| tsp_0500 | 500 | 30 s | **1.189,58** | 1.200,37 |
-| tsp_1000 | 1000 | 60 s | **2.004,70** | 2.053,05 |
+| tsp_0050 | 50 | 5 s | **241.95** | **241.95** |
+| tsp_0100 | 100 | 10 s | **477.05** | 482.00 |
+| tsp_0200 | 200 | 20 s | **885.78** | 889.93 |
+| tsp_0500 | 500 | 30 s | **1,189.58** | 1,200.37 |
+| tsp_1000 | 1000 | 60 s | **2,004.70** | 2,053.05 |
 
-![Rutas para 200 ciudades](figuras/rutas_200.png)
+![Routes for 200 cities](figuras/rutas_200.png)
 
-![Convergencia para 200 ciudades](figuras/convergencia_200.png)
+![Convergence for 200 cities](figuras/convergencia_200.png)
 
-- En la instancia de 50 ciudades los dos llegan a la misma ruta. En las demás
-  encuentran el mismo orden de visita de los clusters y la diferencia está en
-  cómo se recorre cada cluster por dentro.
-- El recocido hace decenas de millones de movimientos baratos; la tabú, unos
-  miles de iteraciones caras (cada una evalúa todo el vecindario). La tabú baja
-  muy deprisa al principio, pero con más ciudades cada iteración cuesta más y en
-  el mismo tiempo hace menos, por eso la diferencia crece con *n*.
-- El recocido pasa la primera parte del tiempo explorando a alta temperatura, y
-  la mejora llega casi toda cuando la temperatura baja.
+- On the 50-city instance both reach the same route. On the others they find
+  the same order of visiting the clusters, and the difference lies in how each
+  cluster is traversed internally.
+- Simulated annealing performs tens of millions of cheap moves; tabu search, a
+  few thousand expensive iterations (each one evaluates the whole
+  neighbourhood). Tabu search drops very quickly at first, but with more cities
+  each iteration costs more and fewer fit in the same time, which is why the gap
+  grows with *n*.
+- Simulated annealing spends the first part of the time exploring at high
+  temperature, and almost all the improvement comes when the temperature drops.
 
-## Cómo ejecutarlo
+## How to run
 
-Ejecutar `ejecutar_tsp.m` en MATLAB (tarda unos 4 minutos). Lee las instancias de
-`instancias/` (primera línea: número de ciudades; después, una ciudad `x y` por
-línea), imprime la tabla y guarda las figuras.
+Run `ejecutar_tsp.m` in MATLAB (it takes about 4 minutes). It reads the
+instances from `instancias/` (first line: number of cities; then one city `x y`
+per line), prints the table and saves the figures.
 
-Las dos funciones se pueden usar por separado con cualquier conjunto de
-ciudades: `[best_tour, best_dist, log] = solve_tsp_sa(coords, max_time)` y lo
-mismo para `solve_tsp_tabu`.
+Both functions can be used on their own with any set of cities:
+`[best_tour, best_dist, log] = solve_tsp_sa(coords, max_time)`, and the same
+for `solve_tsp_tabu`.

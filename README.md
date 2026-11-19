@@ -1,31 +1,31 @@
-# Sistemas inteligentes: metaheurísticas de optimización
+# Intelligent systems: metaheuristic optimization
 
-Problemas de optimización combinatoria y continua resueltos con metaheurísticas
-implementadas desde cero en MATLAB, sin toolboxes de optimización: búsqueda
-local, algoritmos evolutivos, inteligencia de enjambre y optimización
-multiobjetivo. Cada proyecto incluye su análisis experimental, con varias
-configuraciones, ejecuciones repetidas y métricas.
+Combinatorial and continuous optimization problems solved with metaheuristics
+implemented from scratch in MATLAB, without optimization toolboxes: local search,
+evolutionary algorithms, swarm intelligence and multi-objective optimization.
+Each project includes its own experimental analysis, with several
+configurations, repeated runs and metrics.
 
-| Proyecto | Técnicas | Problema |
+| Project | Techniques | Problem |
 |---|---|---|
-| [Recocido simulado y búsqueda tabú](tsp-recocido-tabu/) | Recocido simulado, búsqueda tabú, vecindario 2-opt | Viajante (TSP) con ciudades agrupadas, hasta 1000 ciudades |
-| [Algoritmo genético para Job Shop](jssp-algoritmo-genetico/) | AG con representación entera, cruce JOX, mutación por inversión | Planificación de trabajos en máquinas (JSSP) |
-| [PSO contra algoritmo genético](pso-vs-ag-real/) | Enjambre de partículas, AG con codificación real | Funciones multimodales de Ackley y Rastrigin |
-| [Colonia de hormigas](aco-cvrp/) | ACO con restricción de capacidad | Rutas de reparto (CVRP) con 500 clientes |
-| [NSGA-II multiobjetivo](nsga2-multiobjetivo/) | NSGA-II, SBX, mutación polinómica, hipervolumen, IGD+ | ZDT1 y mochila multiobjetivo |
+| [Simulated annealing and tabu search](tsp-recocido-tabu/) | Simulated annealing, tabu search, 2-opt neighbourhood | Clustered travelling salesman problem (TSP), up to 1000 cities |
+| [Genetic algorithm for Job Shop](jssp-algoritmo-genetico/) | Integer-coded GA, JOX crossover, inversion mutation | Job shop scheduling (JSSP) |
+| [PSO vs. genetic algorithm](pso-vs-ag-real/) | Particle swarm optimization, real-coded GA | Multimodal Ackley and Rastrigin functions |
+| [Ant colony optimization](aco-cvrp/) | ACO with capacity constraint | Vehicle routing (CVRP) with 500 customers |
+| [Multi-objective NSGA-II](nsga2-multiobjetivo/) | NSGA-II, SBX, polynomial mutation, hypervolume, IGD+ | ZDT1 and multi-objective knapsack |
 
-## Estructura
+## Structure
 
-Cada carpeta es un proyecto independiente, con su código, sus datos, un
-script `ejecutar_*.m` (o `comparar_*.m`) que reproduce los resultados y un
-README con la explicación, los resultados y las figuras.
+Each folder is an independent project, with its code, its data, an
+`ejecutar_*.m` (or `comparar_*.m`) script that reproduces the results, and a
+README with the explanation, results and figures. The code (identifiers and
+comments) is written in Spanish.
 
-## Cómo ejecutar
+## How to run
 
-1. Abrir MATLAB (probado en R2025a; no hace falta ninguna toolbox).
-2. Entrar en la carpeta del proyecto y ejecutar su script principal.
+1. Open MATLAB (tested on R2025a; no toolbox required).
+2. Go to the project folder and run its main script.
 
-Los resultados de los README se han obtenido con semilla fija (`rng(1)`). En
-los problemas con límite de tiempo (TSP y JSSP) pueden variar algo según la
-velocidad del ordenador, porque en el mismo tiempo se hacen más o menos
-iteraciones.
+The results in the READMEs were obtained with a fixed seed (`rng(1)`). In the
+time-limited problems (TSP and JSSP) they may vary slightly depending on the
+speed of the computer, since more or fewer iterations fit in the same time.
